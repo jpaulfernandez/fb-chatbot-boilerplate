@@ -1,0 +1,18 @@
+{
+  "name": "fb-chatbot-boilerplate",
+  "version": "1.0.0",
+  "description": "Fb Chatbot boilerplate",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "JMFernandez",
+  "license": "ISC",
+  "devDependencies": {
+    "gulp": "^3.9.1"
+  },
+  "dependencies": {
+    "body-parser": "^1.18.2",
+    "express": "^4.15.4"
+  }
+}
