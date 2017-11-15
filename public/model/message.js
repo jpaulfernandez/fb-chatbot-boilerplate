@@ -1,8 +1,14 @@
-'use strict';
+const mongoose = require('mongoose'),
+	  user = require('./user.js'),
+	  schema = mongoose.Schema;
+	  // userModel = mongoose.model('User');
 
-module.exports = 
-{
-	message: {
-		message : 'hello'
-	}
-}
+const messageSchema = new schema({
+	sender: {type: schema.Types.ObjectId, ref:'User'},
+	entry: String,
+	message: String,
+	attachment: String
+});
+
+
+module.exports = messageSchema;
