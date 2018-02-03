@@ -4,11 +4,16 @@
 'use strict';
 
 //Import Dependecies
-const express = require('express');
-const router = express.Router(),
+const express = require('express'),
+	  router = express.Router(),
 	  message = require('../model/message.js'),
 	  parameters = require( './../../config/parameters.js'),
-	  messageHandler = require('../service/messageHandler.js');
+	  sendAPI = require('../service/sendAPI.js'),
+	  response = require('../model/response.js'),
+	  fbUser = require('../model/user.js'),
+	  fbmessage = require('../model/message.js'),
+	  bodyParser = require('body-parser');
+
 
 //Test Connection method
 ///TODO: Delete this method
@@ -51,28 +56,67 @@ router.post('/webhook', (req, res) => {
 		body.entry.forEach(entry => {
 
 			let webhook_event = entry.messaging[0];
+			let fbId = webhook_event.sender.id;
+			let msg = {};
+			let msgPromise = {}
 
-			//Get Fb User Identifier
-			let sender_psid = webhook_event.sender.id;
+			getUser(fbId, (user) => {
 
-			//log who's the sender, and/or save the sender in the db if not existing
-			//TODO: Create a service that will save sender into DB
-			console.log(webhook_event.sender);
+				msg = new message({
+					sender: user,
+					entry: entry.id,
+					message: webhook_event.message.text,
+					attachement: webhook_event.message.attachement
+				});
 
-			//Handle routing of events if message or postback
-			//check fb developers documentation for their differences
-			if(webhook_event.message)
-			{
-				//Handle message request
-				messageHandler.handleMessage(sender_psid, webhook_event.message);
-			}
-			else 
-			if(webhook_event.postback)
-			{
-				//Handle postback request sent from a structured message
-				messageHandler.handlePostback(sender_psid, webhook_event.postback);
-			}
+				msgPromise = msg.save();
 
+				msgPromise.then(function(){
+					if(webhook_event.message)
+					{
+						response.getMessageResponse(webhook_event.message.message, function(messageData){
+
+							messageData.recipient = { id: user.fbId};
+
+							sendAPI.seen(user.fbId);
+							sendAPI.typeOn(user.fbId);
+							sendAPI.sendMessage(messageData, function(){
+								console.log("success");
+								sendAPI.typeOff(user.fbId);
+							});
+						})
+					}
+					else if (webhook_event.postback) 
+					{
+						if(webhook_event.postback.payload === "GET_STARTED_PAYLOAD")
+						{
+							sendAPI.getStarted(user.fbId, function(){
+								console.log("success");
+								sendAPI.typeOff(fbId);
+							});
+						}
+
+						response.getPostbackResponse(webhook_event.postback.payload, function(messageData){
+
+							messageData.forEach(msgData => {
+
+								msgData.recipient = { id: user.fbId };
+								msgData.message.text = interpolateString(msgData.message.text, user);
+								sendAPI.sendMessage(msgData, function(){
+									console.log("success");
+									sendAPI.typeOff(fbId);
+								});
+								
+							});
+							
+
+						});
+					}
+				});
+
+				
+
+			})
 		});
 
 		//Send Ok status to facebook when an event is received
@@ -86,6 +130,54 @@ router.post('/webhook', (req, res) => {
 	
 
 });
+
+const getUser = (fbId, cb) =>
+{
+	fbUser.findOne({fbId:fbId}, (err, user) =>
+		{
+			if(err)
+				return;
+
+			if(user !== null)
+			{
+				cb(user);
+			}
+			else
+			{
+				fbUser.createFromFb(fbId, function(parseBody){
+					sendAPI.seen(fbId);
+					sendAPI.typeOn(fbId);
+
+					const newUser = new fbUser({
+						fbId : parseBody.id,
+						firstName : parseBody.first_name,
+						lastName : parseBody.last_name,
+						gender : parseBody.gender,
+						profilePic : parseBody.profile_pic,
+						locale : parseBody.locale,
+						timezone : parseBody.timezone
+					});
+
+					let promise = newUser.save();
+
+					promise.then(function(){
+						console.log("sending getting started");
+						cb(newUser);
+					});
+				});
+			}
+		});
+};
+
+const interpolateString = (messageText, user) => {
+
+	let formattedText = messageText.replace(new RegExp('{{firstName}}','g'), user.firstName);
+		formattedText = messageText.replace(new RegExp('{{lastName}}','g'), user.lastName);
+
+		return formattedText;
+}
+
+
 
 
 module.exports = router;

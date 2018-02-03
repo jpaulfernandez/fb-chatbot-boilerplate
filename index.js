@@ -6,10 +6,13 @@
 const express = require('express'),
 	  mongoose = require('mongoose'),
 	  app = express(),
-	  config = require(__dirname + '/config/parameters.js');
+	  config = require(__dirname + '/config/parameters.js'), 
+	  bodyParser = require('body-parser');
 
+app.use(bodyParser.json());
 app.use(express.static(__dirname + '/public'))
 app.use(require(__dirname + '/public/controller'));
+
 
 const listen = () => {
 	app.listen(3000,function(){

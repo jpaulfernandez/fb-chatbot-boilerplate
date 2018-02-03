@@ -1,0 +1,47 @@
+curl -X POST -H "Content-Type: application/json" -d '{ 
+"get_started":{
+    "payload":"GET_STARTED_PAYLOAD"
+}
+}' "https://graph.facebook.com/v2.10/me/messenger_profile?access_token=EAAHlyatoM8YBAHgFyRKGP6ykNNmSnJkk0lHROCJbvGHjreBTrvXqClqLqGZAQKRkZC6LSBZCV2suo2DZBAbyuTXqozWYLpxDd1LUuvNigJZAw5KvwYpL5LvlD3xghhCdAYegJstARSjmi1NyaQWHgYLh9X9QTpZC6Ke61srQnSohEXGUBhbvnZC"
+
+
+
+
+fbUser.findOne({fbId:sender_psid}, (err, user) =>
+		{
+			if(err)
+				return;
+
+			if(user !== null)
+			{
+				cb(user);
+			}
+			else
+			{
+				fbUser.createFromFb(sender_psid, (parseBody) => {
+					sendAPI.seen(sender_psid);
+					sendAPI.typeOn(sender_psid);
+
+					const newUser = new fbUser({
+						fbId : parseBody.id,
+						firstName : parseBody.first_name,
+						lastName : parseBody.last_name,
+						gender : parseBody.gender,
+						profilePic : parseBody.profile_pic,
+						locale : parseBody.locale,
+						timezone : parseBody.timezone
+					});
+
+					let promise = newUser.save();
+
+					promise.then(function(){
+						console.log("sending getting started");
+						sendAPI.getStarted(newUser.fbId, function(){
+							console.log("success");
+						});
+						cb(newUser);
+					});
+
+				}
+			}
+		}

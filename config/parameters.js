@@ -4,8 +4,8 @@ module.exports =
 {
 	fbApiVersion: "v2.10",
   	appSecret: "48530075073474db5d58d129ca968bb9",
-  	pageAccessToken: "EAAEQbe001qMBABt3wlgk00FxnOSpK9Gc67LeWosUqtvOKal24xMP5dRxiOfHxexsD1fejXRjHYHKaEOMNI31K1HHwhwBuEIy1CihPXZAamPooI9ZADcgo62dm3HogS6Yc5WRHruGgiaSEU7t2Tj43rsCCbudixDqI8N0SGu4aTSdlwxFpM",
+  	pageAccessToken: "EAAHlyatoM8YBAHgFyRKGP6ykNNmSnJkk0lHROCJbvGHjreBTrvXqClqLqGZAQKRkZC6LSBZCV2suo2DZBAbyuTXqozWYLpxDd1LUuvNigJZAw5KvwYpL5LvlD3xghhCdAYegJstARSjmi1NyaQWHgYLh9X9QTpZC6Ke61srQnSohEXGUBhbvnZC",
  	validationToken: "my_voice_is_my_password_verify_me",
- 	db: 'mongodb://localhost:27017/'
+ 	db: 'mongodb://localhost:27017/test',
+ 	uri: 'https://graph.facebook.com'
 }
-  	serverURL: "https://416c7fe8.ngrok.io"
